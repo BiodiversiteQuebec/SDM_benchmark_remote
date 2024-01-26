@@ -17,4 +17,4 @@ Pur chaque type d'algorithme, les modèles ont été produits avec 6 différente
     
 *Predictors* correspond à l'inclusion de variables environnementales comme prédicteurs. *Bias* correspond à l'utilisation d'un biais lors de la génération aléatoire des pseudo-absences (tirage uniquement dans les occurrences de l'espèce étudiée). *Spatial* correspond à l'intégration d'un effet d'auto-corrélation spatiale.
 
-Une première version de ce tableau de bord a été produite et se déploie en local (https://github.com/Sckende/BDQC_SDM_benchmark_initial)
+Une première version de ce tableau de bord a été produite et se déploie en local (https://github.com/Sckende/BDQC_SDM_benchmark_initial). L'objectif de ce présent repo est de migrer le tableau de bord en remote.
