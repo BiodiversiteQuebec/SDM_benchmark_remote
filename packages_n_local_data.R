@@ -57,6 +57,3 @@ qc_fus <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/
 
 region <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_interet_sdm.gpkg")
 lakes_qc <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_LAKES_QC_sdm.gpkg")
-
-
-test <- rast(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/oiseaux-nicheurs-qc/", "zonotrichia_leucophrys_range_2017", ".tif"))
