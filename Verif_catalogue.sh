@@ -1,39 +1,17 @@
+#!/bin/bash
 
-# names='bonasa_umbellus catharus_bicknelli catharus_fuscescens catharus_guttatus catharus_ustulatus falcipennis_canadensis junco_hyemalis melospiza_georgiana melospiza_lincolnii melospiza_melodia poecile_atricapillus poecile_hudsonicus setophaga_americana setophaga_caerulescens setophaga_castanea setophaga_cerulea setophaga_coronata setophaga_fusca setophaga_magnolia setophaga_palmarum setophaga_pensylvanica setophaga_petechia setophaga_pinus setophaga_ruticilla setophaga_striata setophaga_tigrina setophaga_virens'
-
-names='c d'
-models='a b'
-
-# models='Maxent brt ewlgcpSDM randomForest'
-
+names="bonasa_umbellus catharus_bicknelli catharus_fuscescens catharus_guttatus catharus_ustulatus falcipennis_canadensis junco_hyemalis melospiza_georgiana melospiza_lincolnii melospiza_melodia poecile_atricapillus poecile_hudsonicus setophaga_americana setophaga_caerulescens setophaga_castanea setophaga_cerulea setophaga_coronata setophaga_fusca setophaga_magnolia setophaga_palmarum setophaga_pensylvanica setophaga_petechia setophaga_pinus setophaga_ruticilla setophaga_striata setophaga_tigrina setophaga_virens"
+models="Maxent brt ewlgcpSDM randomForest"
 hom_dir='s3://bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_'
-
-# for name in $names
-# do
-# for model in $models
-# do
-# echo "$name_$model"
-# # s5cmd du --group "$hom_dir$name_$model*"
-# done
-# done
-
-# echo All done
-# for i in bonasa_umbellus catharus_bicknelli catharus_fuscescens
-# do for j in Maxent brt ewlgcpSDM randomForest
-# do echo "$i_$j"
-# # s5cmd du --group "$hom_dir$i_$j*"
-
-# done
-# done
-
-for i in bonasa_umbellus catharus_bicknelli catharus_fuscescens
+for name in $names
 do
-    for j in 0 1 2 3 4 5 6 7 8 9
-    do 
-        echo "$i$j"
+    for model in $models
+    do
+        echo "$name"_"$model"
+        exi=s5cmd du -H --group ${hom_dir}${name}_${model}*
+	echo $exi
     done
 done
-
 
 # Normalement, 24 cartes par espèces
 # melospiza_melodia
