@@ -6,6 +6,7 @@
 # -------------- #
 library(shiny)
 library(shinydashboard)
+library(shinyWidgets)
 library(leaflet)
 library(sf)
 library(htmltools)
@@ -69,9 +70,9 @@ server <- function(input, output, session) {
     #### Map selection
     observeEvent(input$predictors, {
         if (input$predictors == "noPredictors") {
-            updateSelectInput(session, "spatial", choices = "Spatial")
+            updateRadioGroupButtons(session, "spatial", choices = "Spatial")
         } else {
-            updateSelectInput(session, "spatial", choices = c("Spatial", "noSpatial"))
+            updateRadioGroupButtons(session, "spatial", choices = c("Spatial", "noSpatial"))
         }
     })
     # eBird
@@ -347,20 +348,20 @@ ui <- navbarPage(
                     choices = species
                 ),
                 h4("Paramétrage"),
-                selectInput("predictors",
+                radioGroupButtons("predictors",
                     label = "Prédicteurs environnementaux",
                     choices = c("Predictors", "noPredictors")
                 ),
-                selectInput("bias",
+                radioGroupButtons("bias",
                     label = "Biais d'échantillonnage",
                     choices = c("Bias", "noBias")
                 ),
-                selectInput("spatial",
+                radioGroupButtons("spatial",
                     label = "Auto-corrélation spatiale",
                     choices = c("Spatial", "noSpatial")
                 ),
                 h4("Modèles INLA"),
-                selectInput("inla_sortie",
+                radioGroupButtons("inla_sortie",
                     label = "Métrique",
                     choices = c("pocc", "range")
                 ),
