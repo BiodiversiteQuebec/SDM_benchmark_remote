@@ -39,3 +39,13 @@ for (i in rev(seq(0, 1, by = 0.01))) {
         break
     }
 }
+
+
+# or similar & really faster method
+val_extr <- extract(pocc3, vect(pts2))
+
+sort_val <- sort(val_extr[, 2], decreasing = T)
+thresh <- sort_val[round(nrow(pts2) * 0.99)]
+newPocc <- pocc3
+newPocc[values(newPocc) > thresh] <- 1
+plot(newPocc)
