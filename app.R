@@ -313,8 +313,117 @@ server <- function(input, output, session) {
 
     # -------------------------------- #
     # Richesse specifique INLA
+    #### Map selection
+    observeEvent(input$predictors, {
+        if (input$rs_predictors == "noPredictors") {
+            updateRadioGroupButtons(session, "rs_spatial", choices = "Spatial")
+        } else {
+            updateRadioGroupButtons(session, "rs_spatial", choices = c("Spatial", "noSpatial"))
+        }
+    })
+    # eBird
+    # path_RS_ebird <- reactive({
+    #     paste0(input$species_select, "_range.tif")
+    # })
+
+    # Vincent - INLA
     output$rs_INLA <- renderPlot({
-        map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/INLA_range_2017.tif")
+        map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_INLA_RS_2017.tif")
+
+        plot(map,
+            axes = F,
+            mar = NA,
+            # range = c(0, 1),
+            main = "Richesse spécifique"
+        )
+        plot(st_geometry(qc),
+            add = T,
+            border = "grey"
+        )
+        plot(st_geometry(lakes_qc),
+            add = T,
+            col = "white",
+            border = "grey"
+        )
+    })
+
+    # Maxent
+    path_RS_Maxent <- reactive({
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+    })
+    output$rs_maxent <- renderPlot({
+        map <- rast(path_RS_Maxent())
+
+        plot(map,
+            axes = F,
+            mar = NA,
+            # range = c(0, 1),
+            main = "Richesse spécifique"
+        )
+        plot(st_geometry(qc),
+            add = T,
+            border = "grey"
+        )
+        plot(st_geometry(lakes_qc),
+            add = T,
+            col = "white",
+            border = "grey"
+        )
+    })
+
+    # MapSpecies
+    path_RS_mapSpecies <- reactive({
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+    })
+    output$rs_mapSPecies <- renderPlot({
+        map <- rast(path_RS_mapSpecies())
+
+        plot(map,
+            axes = F,
+            mar = NA,
+            # range = c(0, 1),
+            main = "Richesse spécifique"
+        )
+        plot(st_geometry(qc),
+            add = T,
+            border = "grey"
+        )
+        plot(st_geometry(lakes_qc),
+            add = T,
+            col = "white",
+            border = "grey"
+        )
+    })
+    # BRT
+    path_RS_brt <- reactive({
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+    })
+    output$rs_brt <- renderPlot({
+        map <- rast(path_RS_brt())
+
+        plot(map,
+            axes = F,
+            mar = NA,
+            # range = c(0, 1),
+            main = "Richesse spécifique"
+        )
+        plot(st_geometry(qc),
+            add = T,
+            border = "grey"
+        )
+        plot(st_geometry(lakes_qc),
+            add = T,
+            col = "white",
+            border = "grey"
+        )
+    })
+
+    # Random Forest
+    path_RS_randomForest <- reactive({
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+    })
+    output$rs_rf <- renderPlot({
+        map <- rast(path_RS_randomForest())
 
         plot(map,
             axes = F,
@@ -432,16 +541,15 @@ ui <- navbarPage(
         sidebarLayout(
             sidebarPanel(
                 width = 2,
-                h4("Paramétrage"),
-                selectInput("predictors",
+                radioGroupButtons("rs_predictors",
                     label = "Prédicteurs environnementaux",
                     choices = c("Predictors", "noPredictors")
                 ),
-                selectInput("bias",
+                radioGroupButtons("rs_bias",
                     label = "Biais d'échantillonnage",
                     choices = c("Bias", "noBias")
                 ),
-                selectInput("spatial",
+                radioGroupButtons("rs_spatial",
                     label = "Auto-corrélation spatiale",
                     choices = c("Spatial", "noSpatial")
                 )
@@ -459,13 +567,13 @@ ui <- navbarPage(
                         title = "mapSpecies",
                         width = 4,
                         status = "warning",
-                        plotOutput("")
+                        plotOutput("rs_mapSPecies")
                     ),
                     box(
                         title = "Maxent",
                         width = 4,
                         status = "warning",
-                        plotOutput("")
+                        plotOutput("rs_maxent")
                     )
                 ),
                 # Third row
@@ -480,13 +588,13 @@ ui <- navbarPage(
                         title = "boosted regression tree",
                         width = 4,
                         status = "warning",
-                        plotOutput("")
+                        plotOutput("rs_brt")
                     ),
                     box(
                         title = "random forest",
                         width = 4,
                         status = "warning",
-                        plotOutput("")
+                        plotOutput("rs_rf")
                     )
                 )
             )
