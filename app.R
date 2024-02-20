@@ -349,7 +349,7 @@ server <- function(input, output, session) {
 
     # Maxent
     path_RS_Maxent <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_maxent <- renderPlot({
         map <- rast(path_RS_Maxent())
@@ -373,7 +373,7 @@ server <- function(input, output, session) {
 
     # MapSpecies
     path_RS_mapSpecies <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_mapSPecies <- renderPlot({
         map <- rast(path_RS_mapSpecies())
@@ -396,7 +396,7 @@ server <- function(input, output, session) {
     })
     # BRT
     path_RS_brt <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_brt <- renderPlot({
         map <- rast(path_RS_brt())
@@ -420,7 +420,7 @@ server <- function(input, output, session) {
 
     # Random Forest
     path_RS_randomForest <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, ".tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_rf <- renderPlot({
         map <- rast(path_RS_randomForest())
