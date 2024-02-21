@@ -63,6 +63,12 @@ qc_fus <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/
 region <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_interet_sdm.gpkg")
 lakes_qc <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_LAKES_QC_sdm.gpkg")
 
+rs_n01 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N01_wkt_raw_obs.txt", sep = "\t", h = T) # impossible to load
+rs_n02 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N02_wkt_raw_obs.txt", sep = "\t", h = T)
+rs_n03 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N03_wkt_raw_obs.txt", sep = "\t", h = T)
+rs_n04 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N04_wkt_raw_obs.txt", sep = "\t", h = T)
+rs_pix_10x10 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_10x10_wkt_raw_obs.txt", sep = "\t", h = T)
+
 # ================================================================================
 # server
 # ================================================================================
@@ -312,7 +318,9 @@ server <- function(input, output, session) {
     })
 
     # -------------------------------- #
-    # Richesse specifique INLA
+    # Richesse specifique - SDM
+    # -------------------------------- #
+
     #### Map selection
     observeEvent(input$predictors, {
         if (input$rs_predictors == "noPredictors") {
@@ -441,6 +449,22 @@ server <- function(input, output, session) {
             border = "grey"
         )
     })
+
+    # -------------------------------- #
+    # Richesse specifique - obs brutes
+    # -------------------------------- #
+    year_rawObs <- reactive({
+        input$yearInput_rawObs
+    })
+
+    # N01 level map
+    output$n01Plot <- renderLeaflet({
+
+    })
+    # N02 level map
+    # N03 level map
+    # N04 level map
+    # pix 10x10 km level map
 }
 
 
@@ -537,7 +561,7 @@ ui <- navbarPage(
         )
     ),
     tabPanel(
-        "Richesse spécifique",
+        "Richesse spécifique - SDM",
         sidebarLayout(
             sidebarPanel(
                 width = 2,
@@ -595,6 +619,52 @@ ui <- navbarPage(
                         width = 4,
                         status = "warning",
                         plotOutput("rs_rf")
+                    )
+                )
+            )
+        )
+    ),
+    tabPanel(
+        "Richesse spécifique - Obs brutes",
+        sidebarLayout(
+            sidebarPanel(
+                width = 2,
+                selectInput(
+                    inputId = "yearInput_rawObs",
+                    label = "Année",
+                    choices = 1990:2019
+                )
+            ),
+            mainPanel(
+                # First row
+                fluidRow(
+                    box(
+                        title = "Provinces naturelles",
+                        width = 4,
+                        leafletOutput("n01Plot")
+                    ),
+                    box(
+                        title = "Régions naturelles",
+                        width = 4,
+                        leafletOutput("n02Plot")
+                    ),
+                    box(
+                        title = "Echelle physiographiques",
+                        width = 4,
+                        leafletOutput("n03Plot")
+                    )
+                ),
+                # Third row
+                fluidRow(
+                    box(
+                        title = "Districts écologiques",
+                        width = 4,
+                        leafletOutput("n04Plot")
+                    ),
+                    box(
+                        title = "10 x 10 km",
+                        width = 4,
+                        leafletOutput("pix10_10Plot")
                     )
                 )
             )
