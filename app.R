@@ -342,7 +342,7 @@ server <- function(input, output, session) {
             axes = F,
             mar = NA,
             # range = c(0, 1),
-            main = "Richesse spécifique"
+            main = paste0("cumul = ", sum(values(map), na.rm = T))
         )
         plot(st_geometry(qc),
             add = T,
@@ -366,7 +366,7 @@ server <- function(input, output, session) {
             axes = F,
             mar = NA,
             # range = c(0, 1),
-            main = "Richesse spécifique"
+            main = paste0("cumul = ", sum(values(map), na.rm = T))
         )
         plot(st_geometry(qc),
             add = T,
@@ -390,7 +390,7 @@ server <- function(input, output, session) {
             axes = F,
             mar = NA,
             # range = c(0, 1),
-            main = "Richesse spécifique"
+            main = paste0("cumul = ", sum(values(map), na.rm = T))
         )
         plot(st_geometry(qc),
             add = T,
@@ -413,7 +413,7 @@ server <- function(input, output, session) {
             axes = F,
             mar = NA,
             # range = c(0, 1),
-            main = "Richesse spécifique"
+            main = paste0("cumul = ", sum(values(map), na.rm = T))
         )
         plot(st_geometry(qc),
             add = T,
@@ -437,7 +437,7 @@ server <- function(input, output, session) {
             axes = F,
             mar = NA,
             # range = c(0, 1),
-            main = "Richesse spécifique"
+            main = paste0("cumul = ", sum(values(map), na.rm = T))
         )
         plot(st_geometry(qc),
             add = T,
