@@ -336,7 +336,7 @@ server <- function(input, output, session) {
 
     # Vincent - INLA
     output$rs_INLA <- renderPlot({
-        map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_INLA_RS_2017.tif")
+        map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_INLA_RS_2017.tif")
 
         plot(map,
             axes = F,
@@ -357,7 +357,7 @@ server <- function(input, output, session) {
 
     # Maxent
     path_RS_Maxent <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_maxent <- renderPlot({
         map <- rast(path_RS_Maxent())
@@ -381,7 +381,7 @@ server <- function(input, output, session) {
 
     # MapSpecies
     path_RS_mapSpecies <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_mapSPecies <- renderPlot({
         map <- rast(path_RS_mapSpecies())
@@ -404,7 +404,7 @@ server <- function(input, output, session) {
     })
     # BRT
     path_RS_brt <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_brt <- renderPlot({
         map <- rast(path_RS_brt())
@@ -428,7 +428,7 @@ server <- function(input, output, session) {
 
     # Random Forest
     path_RS_randomForest <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
     })
     output$rs_rf <- renderPlot({
         map <- rast(path_RS_randomForest())
@@ -449,22 +449,6 @@ server <- function(input, output, session) {
             border = "grey"
         )
     })
-
-    # -------------------------------- #
-    # Richesse specifique - obs brutes
-    # -------------------------------- #
-    year_rawObs <- reactive({
-        input$yearInput_rawObs
-    })
-
-    # N01 level map
-    output$n01Plot <- renderLeaflet({
-
-    })
-    # N02 level map
-    # N03 level map
-    # N04 level map
-    # pix 10x10 km level map
 }
 
 
@@ -619,52 +603,6 @@ ui <- navbarPage(
                         width = 4,
                         status = "warning",
                         plotOutput("rs_rf")
-                    )
-                )
-            )
-        )
-    ),
-    tabPanel(
-        "Richesse spécifique - Obs brutes",
-        sidebarLayout(
-            sidebarPanel(
-                width = 2,
-                selectInput(
-                    inputId = "yearInput_rawObs",
-                    label = "Année",
-                    choices = 1990:2019
-                )
-            ),
-            mainPanel(
-                # First row
-                fluidRow(
-                    box(
-                        title = "Provinces naturelles",
-                        width = 4,
-                        leafletOutput("n01Plot")
-                    ),
-                    box(
-                        title = "Régions naturelles",
-                        width = 4,
-                        leafletOutput("n02Plot")
-                    ),
-                    box(
-                        title = "Echelle physiographiques",
-                        width = 4,
-                        leafletOutput("n03Plot")
-                    )
-                ),
-                # Third row
-                fluidRow(
-                    box(
-                        title = "Districts écologiques",
-                        width = 4,
-                        leafletOutput("n04Plot")
-                    ),
-                    box(
-                        title = "10 x 10 km",
-                        width = 4,
-                        leafletOutput("pix10_10Plot")
                     )
                 )
             )
