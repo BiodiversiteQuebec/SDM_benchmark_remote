@@ -6,11 +6,11 @@ map_ref <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/ac
 
 # Liste des cartes manquantes BRT
 
-new_map <- list.files("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/sdm_maps_Fran",
+new_map <- list.files("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/Boulanger_tree_species/SDM/",
     pattern = ".tif",
     full.names = TRUE
 )
-new_map_short <- list.files("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/sdm_maps_Fran",
+new_map_short <- list.files("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/Boulanger_tree_species/SDM/",
     pattern = ".tif",
     full.names = FALSE
 )
@@ -23,8 +23,12 @@ for (i in 1:length(new_map)) {
 
         map_crop <- terra::crop(n_map, qc_fus)
         map_mask <- mask(map_crop, qc_fus)
+        # writeRaster(map_mask,
+        #     paste0("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/ACER_missing_maps/maps_conv_crop/CROPPED_QC_", new_map_short[i]),
+        #     overwrite = T
+        # )
         writeRaster(map_mask,
-            paste0("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/ACER_missing_maps/maps_conv_crop/CROPPED_QC_", new_map_short[i]),
+            paste0("/home/local/USHERBROOKE/juhc3201/BDQC-GEOBON/data/Boulanger_tree_species/SDM/CROPPED_QC_", new_map_short[i]),
             overwrite = T
         )
     }

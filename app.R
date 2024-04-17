@@ -19,13 +19,14 @@ library(rgbif)
 library(geodata)
 library(rmapshaper)
 library(rnaturalearth)
+library(RCurl) # for check if url exists - url.exists()
 
 #### Local data ####
 # ---------------- #
 
 # Species data
 # ------------
-species <- c(
+species_bird <- c(
     "bonasa_umbellus",
     "catharus_bicknelli",
     "catharus_fuscescens",
@@ -55,24 +56,89 @@ species <- c(
     "setophaga_virens"
 )
 
+species_tree <- c(
+    "abies_balsamea",
+    "acer_rubrum",
+    "acer_saccharum",
+    "betula_alleghaniensis",
+    "betula_papyrifera",
+    "fagus_grandifolia",
+    "larix_laricina",
+    "picea_glauca",
+    "picea_mariana",
+    "picea_rubens",
+    "pinus_banksiana",
+    "pinus_resinosa",
+    "pinus_strobus",
+    "populus_tremuloides",
+    "quercus_rubra",
+    "tsuga_canadensis",
+    "thuja_occidentalis"
+)
+code_tree <- c(
+    "ABIE.BAL",
+    "ACER.RUB",
+    "ACER.SAH",
+    "BETU.ALL",
+    "BETU.PAP",
+    "FAGU.GRA",
+    "LARI.LAR",
+    "PICE.GLA",
+    "PICE.MAR",
+    "PICE.RUB",
+    "PINU.BAN",
+    "PINU.RES",
+    "PINU.STR",
+    "POPU.TRE",
+    "QUER.RUB",
+    "THUJ.SPP.ALL",
+    "TSUG.CAN"
+)
+species_df <- data.frame(
+    species = c(species_bird, species_tree),
+    taxon = c(rep("oiseau", length(species_bird)), rep("arbre", length(species_tree))),
+    code = c(rep("none", length(species_bird)), code_tree)
+)
+
 # Several Polygons for Qc
 # -----------------------
 qc <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/QUEBEC_CR_NIV_01.gpkg")
 qc_fus <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/QUEBEC_Unique_poly.gpkg")
 
+
 region <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_interet_sdm.gpkg")
 lakes_qc <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/REGION_LAKES_QC_sdm.gpkg")
 
+# Function for null map
+
+blank_map <- function() {
+    plot(st_geometry(qc),
+        border = "grey"
+    )
+    plot(st_geometry(lakes_qc),
+        add = T,
+        col = "white",
+        border = "grey"
+    )
+}
+
 # rs_n01 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N01_wkt_raw_obs.txt", sep = "\t", h = T) # impossible to load
-rs_n02 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N02_wkt_raw_obs.txt", sep = "\t", h = T)
-rs_n03 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N03_wkt_raw_obs.txt", sep = "\t", h = T)
-rs_n04 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N04_wkt_raw_obs.txt", sep = "\t", h = T)
-rs_pix_10x10 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_10x10_wkt_raw_obs.txt", sep = "\t", h = T)
+# rs_n02 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N02_wkt_raw_obs.txt", sep = "\t", h = T)
+# rs_n03 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N03_wkt_raw_obs.txt", sep = "\t", h = T)
+# rs_n04 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_N04_wkt_raw_obs.txt", sep = "\t", h = T)
+# rs_pix_10x10 <- read.table("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/raw_obs/QC_CUBE_Richesse_spe_10x10_wkt_raw_obs.txt", sep = "\t", h = T)
 
 # ================================================================================
 # server
 # ================================================================================
 server <- function(input, output, session) {
+    #### Species selection
+    output$species <- renderUI({
+        selectInput("species_select",
+            label = "",
+            choices = species_df$species[species_df$taxon == input$taxon_select]
+        )
+    })
     #### Map selection
     observeEvent(input$predictors, {
         if (input$predictors == "noPredictors") {
@@ -81,9 +147,14 @@ server <- function(input, output, session) {
             updateRadioGroupButtons(session, "spatial", choices = c("Spatial", "noSpatial"))
         }
     })
-    # eBird
-    path_map_ebird <- reactive({
-        paste0(input$species_select, "_range.tif")
+    # Ref map
+    path_map_ref <- reactive({
+        if (input$taxon_select == "oiseau") {
+            paste0(input$species_select, "_range.tif")
+        } else {
+            code <- species_df$code[species_df$species == input$species_select]
+            paste0("baseline_BudwormBaselineFire_", code, "_0_merged.tif")
+        }
     })
 
     # Vincent - INLA
@@ -95,225 +166,260 @@ server <- function(input, output, session) {
 
     path_map_Maxent <- reactive({
         if (input$model_output == "pocc") {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_Maxent_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_Maxent_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         } else {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_Maxent_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_Maxent_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         }
     })
 
     # MapSpecies
     path_map_mapSpecies <- reactive({
         if (input$model_output == "pocc") {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         } else {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_ewlgcpSDM_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         }
     })
 
     # BRT
     path_map_brt <- reactive({
         if (input$model_output == "pocc") {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_brt_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_brt_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         } else {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_brt_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_brt_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         }
     })
 
     # Random Forest
     path_map_randomForest <- reactive({
         if (input$model_output == "pocc") {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_randomForest_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/maps/CROPPED_QC_", input$species_select, "_randomForest_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         } else {
-            paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_randomForest_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/thresh_test/THRESH_99_CROPPED_QC_", input$species_select, "_randomForest_", input$predictors, "_", input$bias, "_", input$spatial, ".tif")
         }
     })
 
     #### Map visualization
-    # eBird
-    output$map_eBird <- renderPlot({
-        mp <- terra::rast(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/eBird_maps/", path_map_ebird()))
-
-        terra::plot(mp,
-            axes = F,
-            main = "Abondance",
-            mar = NA
+    # Ref map
+    output$map_ref <- renderPlot({
+        path <- ifelse(input$taxon_select == "oiseau",
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/eBird_maps/", path_map_ref()),
+            paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/io/forets-cc-landis/", path_map_ref())
         )
-        plot(st_geometry(qc), add = T, border = "grey")
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-        # }
-    })
 
-    # Vincent
-    output$map_Vince <- renderPlot({
-        go_cat <- rast(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/oiseaux-nicheurs-qc/", id_feat_Vince(), ".tif"))
 
-        if (input$model_output == "range") {
-            terra::plot(go_cat,
-                axes = F,
-                main = "Aire de distribution",
-                mar = NA,
-                col = c("#f6f8e0", "#009999"),
-                key.pos = NULL
-            )
-
-            legend("topright",
-                fill = c("#f6f8e0", "#009999"),
-                border = "black",
-                legend = c("absente", "présente"),
-                bty = "n"
-            )
-
-            plot(st_geometry(qc),
-                add = T,
-                border = "grey"
-            )
-            plot(st_geometry(lakes_qc),
-                add = T,
-                col = "white",
-                border = "grey"
-            )
+        if (!url.exists(path)) {
+            blank_map()
         } else {
-            rr_crop <- raster::crop(go_cat, qc_fus)
-            rr_mask <- mask(rr_crop, qc_fus)
+            if (input$taxon_select == "oiseau") {
+                mp <- terra::rast(paste0("/vsicurl/", path))
+            } else {
+                mp <- terra::rast(paste0("/vsicurl/", path))
+            }
 
-            plot(rr_mask,
+            terra::plot(mp,
                 axes = F,
-                mar = NA,
-                main = "Probabilité de présence"
+                main = ifelse(input$taxon_select == "oiseau", "Abondance", "Biomasse"),
+                mar = NA
             )
-            plot(st_geometry(qc),
-                add = T,
-                border = "grey"
-            )
+            plot(st_geometry(qc), add = T, border = "grey")
             plot(st_geometry(lakes_qc),
                 add = T,
                 col = "white",
                 border = "grey"
             )
         }
-        if (input$occs == TRUE) {
-            occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+    })
 
-            plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+    # Vincent
+    output$map_Vince <- renderPlot({
+        path <- paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/oiseaux-nicheurs-qc/", id_feat_Vince(), ".tif")
+
+        if (!url.exists(path)) {
+            blank_map()
+        } else {
+            go_cat <- rast(paste0("/vsicurl/", path))
+
+            if (input$model_output == "range") {
+                terra::plot(go_cat,
+                    axes = F,
+                    main = "Aire de distribution",
+                    mar = NA,
+                    col = c("#f6f8e0", "#009999"),
+                    key.pos = NULL
+                )
+
+                legend("topright",
+                    fill = c("#f6f8e0", "#009999"),
+                    border = "black",
+                    legend = c("absente", "présente"),
+                    bty = "n"
+                )
+
+                plot(st_geometry(qc),
+                    add = T,
+                    border = "grey"
+                )
+                plot(st_geometry(lakes_qc),
+                    add = T,
+                    col = "white",
+                    border = "grey"
+                )
+            } else {
+                rr_crop <- raster::crop(go_cat, qc_fus)
+                rr_mask <- mask(rr_crop, qc_fus)
+
+                plot(rr_mask,
+                    axes = F,
+                    mar = NA,
+                    main = "Probabilité de présence"
+                )
+                plot(st_geometry(qc),
+                    add = T,
+                    border = "grey"
+                )
+                plot(st_geometry(lakes_qc),
+                    add = T,
+                    col = "white",
+                    border = "grey"
+                )
+            }
+            if (input$occs == TRUE) {
+                occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+
+                plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            }
         }
     })
 
     # MapSPecies
     output$map_mapSpecies <- renderPlot({
-        pred_crop <- rast(path_map_mapSpecies())
+        if (!url.exists(path_map_mapSpecies())) {
+            blank_map()
+        } else {
+            pred_crop <- rast(paste0("/vsicurl/", path_map_mapSpecies()))
 
-        plot(pred_crop,
-            axes = F,
-            mar = NA,
-            main = ifelse(input$model_output == "pocc", "Intensité", "Aire de distribution")
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
+            plot(pred_crop,
+                axes = F,
+                mar = NA,
+                main = ifelse(input$model_output == "pocc", "Intensité", "Aire de distribution")
+            )
+            plot(st_geometry(qc),
+                add = T,
+                border = "grey"
+            )
+            plot(st_geometry(lakes_qc),
+                add = T,
+                col = "white",
+                border = "grey"
+            )
 
-        if (input$occs == TRUE) {
-            occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
-            plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            if (input$occs == TRUE) {
+                occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+                plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            }
         }
     })
 
     # Maxent
     output$map_Maxent <- renderPlot({
-        pred_crop <- rast(path_map_Maxent())
+        if (!url.exists(path_map_Maxent())) {
+            blank_map()
+        } else {
+            pred_crop <- rast(paste0("/vsicurl/", path_map_Maxent()))
 
-        plot(pred_crop,
-            axes = F,
-            mar = NA,
-            main = ifelse(input$model_output == "pocc", "Probabilité de présence", "Aire de distribution"),
-            range = c(0, 1)
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-        if (input$occs == TRUE) {
-            occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
-            plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
-        }
-        if (input$pseudo_abs == TRUE) {
-            if (input$bias == "noBias") {
-                pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_region_Maxent_noBias.gpkg"))
-                plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
-            } else if (input$predictors == "noPredictors") {
-                pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_noPredictors_Bias_Spatial.gpkg"))
-                plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
-            } else if (input$spatial == "Spatial") {
-                pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_Predictors_Bias_Spatial.gpkg"))
-                plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
-            } else {
-                pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_Predictors_Bias_noSpatial.gpkg"))
-                plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
+            plot(pred_crop,
+                axes = F,
+                mar = NA,
+                main = ifelse(input$model_output == "pocc", "Probabilité de présence", "Aire de distribution"),
+                range = c(0, 1)
+            )
+            plot(st_geometry(qc),
+                add = T,
+                border = "grey"
+            )
+            plot(st_geometry(lakes_qc),
+                add = T,
+                col = "white",
+                border = "grey"
+            )
+            if (input$occs == TRUE) {
+                occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+                plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            }
+            if (input$pseudo_abs == TRUE) {
+                if (input$bias == "noBias") {
+                    pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_region_Maxent_noBias.gpkg"))
+                    plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
+                } else if (input$predictors == "noPredictors") {
+                    pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_noPredictors_Bias_Spatial.gpkg"))
+                    plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
+                } else if (input$spatial == "Spatial") {
+                    pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_Predictors_Bias_Spatial.gpkg"))
+                    plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
+                } else {
+                    pabs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/pseudo_abs/CROPPED_QC_pseudo-abs_", input$species_select, "_Maxent_Predictors_Bias_noSpatial.gpkg"))
+                    plot(pabs, add = T, pch = 16, col = rgb(139, 69, 19, maxColorValue = 255, alpha = 125), cex = 0.5)
+                }
             }
         }
     })
 
     # BRT
     output$map_BRT <- renderPlot({
-        pred_crop <- rast(path_map_brt())
+        if (!url.exists(path_map_brt())) {
+            blank_map()
+        } else {
+            pred_crop <- rast(paste0("/vsicurl/", path_map_brt()))
 
-        plot(pred_crop,
-            axes = F,
-            mar = NA,
-            # main = ifelse(input$model_output, "Probabilité de présence", "Aire de distribution"),
-            range = c(0, 1)
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-        if (input$occs == TRUE) {
-            occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
-            plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            plot(pred_crop,
+                axes = F,
+                mar = NA,
+                # main = ifelse(input$model_output, "Probabilité de présence", "Aire de distribution"),
+                range = c(0, 1)
+            )
+            plot(st_geometry(qc),
+                add = T,
+                border = "grey"
+            )
+            plot(st_geometry(lakes_qc),
+                add = T,
+                col = "white",
+                border = "grey"
+            )
+            if (input$occs == TRUE) {
+                occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+                plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            }
         }
     })
 
     # Random Forest
     output$map_randomForest <- renderPlot({
-        pred_crop <- rast(path_map_randomForest())
+        if (!url.exists(path_map_randomForest())) {
+            blank_map()
+        } else {
+            pred_crop <- rast(paste0("/vsicurl/", path_map_randomForest()))
 
-        plot(pred_crop,
-            axes = F,
-            mar = NA,
-            main = ifelse(input$model_output == "pocc", "Probabilité de présence", "Aire de distribution"),
-            range = c(0, 1)
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-        if (input$occs == TRUE) {
-            occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
-            plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            plot(pred_crop,
+                axes = F,
+                mar = NA,
+                main = ifelse(input$model_output == "pocc", "Probabilité de présence", "Aire de distribution"),
+                range = c(0, 1)
+            )
+            plot(st_geometry(qc),
+                add = T,
+                border = "grey"
+            )
+            plot(st_geometry(lakes_qc),
+                add = T,
+                col = "white",
+                border = "grey"
+            )
+            if (input$occs == TRUE) {
+                occs <- st_read(paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/occurrences/CROPPED_QC_", input$species_select, ".gpkg"))
+                plot(occs, add = T, pch = 16, col = rgb(0, 0, 0, alpha = 0.5, maxColorValue = 1), cex = 0.5)
+            }
         }
     })
 
@@ -322,133 +428,133 @@ server <- function(input, output, session) {
     # -------------------------------- #
 
     #### Map selection
-    observeEvent(input$predictors, {
-        if (input$rs_predictors == "noPredictors") {
-            updateRadioGroupButtons(session, "rs_spatial", choices = "Spatial")
-        } else {
-            updateRadioGroupButtons(session, "rs_spatial", choices = c("Spatial", "noSpatial"))
-        }
-    })
+    # observeEvent(input$predictors, {
+    #     if (input$rs_predictors == "noPredictors") {
+    #         updateRadioGroupButtons(session, "rs_spatial", choices = "Spatial")
+    #     } else {
+    #         updateRadioGroupButtons(session, "rs_spatial", choices = c("Spatial", "noSpatial"))
+    #     }
+    # })
     # eBird
     # path_RS_ebird <- reactive({
     #     paste0(input$species_select, "_range.tif")
     # })
 
     # Vincent - INLA
-    output$rs_INLA <- renderPlot({
-        map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_INLA_RS_2017.tif")
+    # output$rs_INLA <- renderPlot({
+    #     map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_INLA_RS_2017.tif")
 
-        plot(map,
-            axes = F,
-            mar = NA,
-            # range = c(0, 1),
-            main = paste0("cumul = ", sum(values(map), na.rm = T))
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-    })
+    #     plot(map,
+    #         axes = F,
+    #         mar = NA,
+    #         # range = c(0, 1),
+    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
+    #     )
+    #     plot(st_geometry(qc),
+    #         add = T,
+    #         border = "grey"
+    #     )
+    #     plot(st_geometry(lakes_qc),
+    #         add = T,
+    #         col = "white",
+    #         border = "grey"
+    #     )
+    # })
 
     # Maxent
-    path_RS_Maxent <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    })
-    output$rs_maxent <- renderPlot({
-        map <- rast(path_RS_Maxent())
+    # path_RS_Maxent <- reactive({
+    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+    # })
+    # output$rs_maxent <- renderPlot({
+    #     map <- rast(path_RS_Maxent())
 
-        plot(map,
-            axes = F,
-            mar = NA,
-            # range = c(0, 1),
-            main = paste0("cumul = ", sum(values(map), na.rm = T))
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-    })
+    #     plot(map,
+    #         axes = F,
+    #         mar = NA,
+    #         # range = c(0, 1),
+    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
+    #     )
+    #     plot(st_geometry(qc),
+    #         add = T,
+    #         border = "grey"
+    #     )
+    #     plot(st_geometry(lakes_qc),
+    #         add = T,
+    #         col = "white",
+    #         border = "grey"
+    #     )
+    # })
 
     # MapSpecies
-    path_RS_mapSpecies <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    })
-    output$rs_mapSPecies <- renderPlot({
-        map <- rast(path_RS_mapSpecies())
+    # path_RS_mapSpecies <- reactive({
+    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+    # })
+    # output$rs_mapSPecies <- renderPlot({
+    #     map <- rast(path_RS_mapSpecies())
 
-        plot(map,
-            axes = F,
-            mar = NA,
-            # range = c(0, 1),
-            main = paste0("cumul = ", sum(values(map), na.rm = T))
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-    })
+    #     plot(map,
+    #         axes = F,
+    #         mar = NA,
+    #         # range = c(0, 1),
+    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
+    #     )
+    #     plot(st_geometry(qc),
+    #         add = T,
+    #         border = "grey"
+    #     )
+    #     plot(st_geometry(lakes_qc),
+    #         add = T,
+    #         col = "white",
+    #         border = "grey"
+    #     )
+    # })
     # BRT
-    path_RS_brt <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    })
-    output$rs_brt <- renderPlot({
-        map <- rast(path_RS_brt())
+    # path_RS_brt <- reactive({
+    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+    # })
+    # output$rs_brt <- renderPlot({
+    #     map <- rast(path_RS_brt())
 
-        plot(map,
-            axes = F,
-            mar = NA,
-            # range = c(0, 1),
-            main = paste0("cumul = ", sum(values(map), na.rm = T))
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-    })
+    #     plot(map,
+    #         axes = F,
+    #         mar = NA,
+    #         # range = c(0, 1),
+    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
+    #     )
+    #     plot(st_geometry(qc),
+    #         add = T,
+    #         border = "grey"
+    #     )
+    #     plot(st_geometry(lakes_qc),
+    #         add = T,
+    #         col = "white",
+    #         border = "grey"
+    #     )
+    # })
 
     # Random Forest
-    path_RS_randomForest <- reactive({
-        paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    })
-    output$rs_rf <- renderPlot({
-        map <- rast(path_RS_randomForest())
+    # path_RS_randomForest <- reactive({
+    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
+    # })
+    # output$rs_rf <- renderPlot({
+    #     map <- rast(path_RS_randomForest())
 
-        plot(map,
-            axes = F,
-            mar = NA,
-            # range = c(0, 1),
-            main = paste0("cumul = ", sum(values(map), na.rm = T))
-        )
-        plot(st_geometry(qc),
-            add = T,
-            border = "grey"
-        )
-        plot(st_geometry(lakes_qc),
-            add = T,
-            col = "white",
-            border = "grey"
-        )
-    })
+    #     plot(map,
+    #         axes = F,
+    #         mar = NA,
+    #         # range = c(0, 1),
+    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
+    #     )
+    #     plot(st_geometry(qc),
+    #         add = T,
+    #         border = "grey"
+    #     )
+    #     plot(st_geometry(lakes_qc),
+    #         add = T,
+    #         col = "white",
+    #         border = "grey"
+    #     )
+    # })
 }
 
 
@@ -467,147 +573,151 @@ server <- function(input, output, session) {
 # ================================================================================
 ui <- navbarPage(
     "Exploration SDMs",
-    tabPanel(
-        "SDMs",
-        sidebarLayout(
-            sidebarPanel(
-                width = 2,
-                h4("Espèce"),
-                selectInput("species_select",
-                    label = "",
-                    choices = species
-                ),
-                h4("Paramétrage"),
-                radioGroupButtons("model_output",
-                    label = "Sortie des modèles",
-                    choices = c("pocc", "range")
-                ),
-                radioGroupButtons("predictors",
-                    label = "Prédicteurs environnementaux",
-                    choices = c("Predictors", "noPredictors")
-                ),
-                radioGroupButtons("bias",
-                    label = "Biais d'échantillonnage",
-                    choices = c("Bias", "noBias")
-                ),
-                radioGroupButtons("spatial",
-                    label = "Auto-corrélation spatiale",
-                    choices = c("Spatial", "noSpatial")
-                ),
-                h4("Données"),
-                checkboxInput("occs",
-                    "Occurrences",
-                    value = FALSE
-                ),
-                checkboxInput("pseudo_abs",
-                    "Pseudo-absence",
-                    value = FALSE
-                )
+    # tabPanel(
+    # "SDMs",
+    sidebarLayout(
+        sidebarPanel(
+            width = 2,
+            h4("Groupe taxonomique"),
+            selectInput("taxon_select",
+                label = "",
+                choices = unique(species_df$taxon)
             ),
-            mainPanel(
-                # First row
-                fluidRow(
-                    box(
-                        title = "e-bird",
-                        width = 4,
-                        plotOutput("map_eBird")
-                    ),
-                    box(
-                        title = "mapSpecies",
-                        width = 4,
-                        plotOutput("map_mapSpecies")
-                    ),
-                    box(
-                        title = "Maxent",
-                        width = 4,
-                        plotOutput("map_Maxent")
-                    )
-                ),
-                # Third row
-                fluidRow(
-                    box(
-                        title = "INLA",
-                        width = 4,
-                        plotOutput("map_Vince")
-                    ),
-                    box(
-                        title = "boosted regression tree",
-                        width = 4,
-                        plotOutput("map_BRT")
-                    ),
-                    box(
-                        title = "random forest",
-                        width = 4,
-                        plotOutput("map_randomForest")
-                    )
-                )
+            h4("Espèce"),
+            uiOutput("species",
+                label = ""
+            ), # associated to renderUI in server section
+            h4("Paramétrage"),
+            radioGroupButtons("model_output",
+                label = "Sortie des modèles",
+                choices = c("pocc", "range")
+            ),
+            radioGroupButtons("predictors",
+                label = "Prédicteurs environnementaux",
+                choices = c("Predictors", "noPredictors")
+            ),
+            radioGroupButtons("bias",
+                label = "Biais d'échantillonnage",
+                choices = c("Bias", "noBias")
+            ),
+            radioGroupButtons("spatial",
+                label = "Auto-corrélation spatiale",
+                choices = c("Spatial", "noSpatial")
+            ),
+            h4("Données"),
+            checkboxInput("occs",
+                "Occurrences",
+                value = FALSE
+            ),
+            checkboxInput("pseudo_abs",
+                "Pseudo-absence",
+                value = FALSE
             )
-        )
-    ),
-    tabPanel(
-        "Richesse spécifique - SDM",
-        sidebarLayout(
-            sidebarPanel(
-                width = 2,
-                radioGroupButtons("rs_predictors",
-                    label = "Prédicteurs environnementaux",
-                    choices = c("Predictors", "noPredictors")
+        ),
+        mainPanel(
+            # First row
+            fluidRow(
+                box(
+                    title = "carte de référence",
+                    width = 4,
+                    plotOutput("map_ref")
                 ),
-                radioGroupButtons("rs_bias",
-                    label = "Biais d'échantillonnage",
-                    choices = c("Bias", "noBias")
+                box(
+                    title = "mapSpecies",
+                    width = 4,
+                    plotOutput("map_mapSpecies")
                 ),
-                radioGroupButtons("rs_spatial",
-                    label = "Auto-corrélation spatiale",
-                    choices = c("Spatial", "noSpatial")
+                box(
+                    title = "Maxent",
+                    width = 4,
+                    plotOutput("map_Maxent")
                 )
             ),
-            mainPanel(
-                # First row
-                fluidRow(
-                    box(
-                        title = "e-bird",
-                        width = 4,
-                        status = "primary",
-                        plotOutput("")
-                    ),
-                    box(
-                        title = "mapSpecies",
-                        width = 4,
-                        status = "warning",
-                        plotOutput("rs_mapSPecies")
-                    ),
-                    box(
-                        title = "Maxent",
-                        width = 4,
-                        status = "warning",
-                        plotOutput("rs_maxent")
-                    )
+            # Third row
+            fluidRow(
+                box(
+                    title = "INLA",
+                    width = 4,
+                    plotOutput("map_Vince")
                 ),
-                # Third row
-                fluidRow(
-                    box(
-                        title = "INLA",
-                        width = 4,
-                        status = "primary",
-                        plotOutput("rs_INLA")
-                    ),
-                    box(
-                        title = "boosted regression tree",
-                        width = 4,
-                        status = "warning",
-                        plotOutput("rs_brt")
-                    ),
-                    box(
-                        title = "random forest",
-                        width = 4,
-                        status = "warning",
-                        plotOutput("rs_rf")
-                    )
+                box(
+                    title = "boosted regression tree",
+                    width = 4,
+                    plotOutput("map_BRT")
+                ),
+                box(
+                    title = "random forest",
+                    width = 4,
+                    plotOutput("map_randomForest")
                 )
             )
         )
     )
+    # ),
+    # tabPanel(
+    #     "Richesse spécifique - SDM",
+    #     sidebarLayout(
+    #         sidebarPanel(
+    #             width = 2,
+    #             radioGroupButtons("rs_predictors",
+    #                 label = "Prédicteurs environnementaux",
+    #                 choices = c("Predictors", "noPredictors")
+    #             ),
+    #             radioGroupButtons("rs_bias",
+    #                 label = "Biais d'échantillonnage",
+    #                 choices = c("Bias", "noBias")
+    #             ),
+    #             radioGroupButtons("rs_spatial",
+    #                 label = "Auto-corrélation spatiale",
+    #                 choices = c("Spatial", "noSpatial")
+    #             )
+    #         ),
+    #         mainPanel(
+    #             # First row
+    #             fluidRow(
+    #                 box(
+    #                     title = "e-bird",
+    #                     width = 4,
+    #                     status = "primary",
+    #                     plotOutput("")
+    #                 ),
+    #                 box(
+    #                     title = "mapSpecies",
+    #                     width = 4,
+    #                     status = "warning",
+    #                     plotOutput("rs_mapSPecies")
+    #                 ),
+    #                 box(
+    #                     title = "Maxent",
+    #                     width = 4,
+    #                     status = "warning",
+    #                     plotOutput("rs_maxent")
+    #                 )
+    #             ),
+    #             # Third row
+    #             fluidRow(
+    #                 box(
+    #                     title = "INLA",
+    #                     width = 4,
+    #                     status = "primary",
+    #                     plotOutput("rs_INLA")
+    #                 ),
+    #                 box(
+    #                     title = "boosted regression tree",
+    #                     width = 4,
+    #                     status = "warning",
+    #                     plotOutput("rs_brt")
+    #                 ),
+    #                 box(
+    #                     title = "random forest",
+    #                     width = 4,
+    #                     status = "warning",
+    #                     plotOutput("rs_rf")
+    #                 )
+    #             )
+    #         )
+    #     )
+    # )
 )
 
 # ================================================================================
