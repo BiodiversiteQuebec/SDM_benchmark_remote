@@ -112,6 +112,7 @@ lakes_qc <- st_read("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-i
 # Function for null map
 
 blank_map <- function() {
+    par(mar = rep(0, 4))
     plot(st_geometry(qc),
         border = "grey"
     )
@@ -207,7 +208,7 @@ server <- function(input, output, session) {
             paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/io/forets-cc-landis/", path_map_ref())
         )
 
-
+        par(mar = rep(0, 4))
         if (!url.exists(path)) {
             blank_map()
         } else {
@@ -233,8 +234,8 @@ server <- function(input, output, session) {
 
     # Vincent
     output$map_Vince <- renderPlot({
-        path <- paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/oiseaux-nicheurs-qc/", id_feat_Vince(), ".tif")
-
+        path <- paste0("https://object-arbutus.cloud.computecanada.ca/bq-io/acer/oiseaux-nicheurs-qc/", id_feat_Vince(), ".tif")
+        par(mar = rep(0, 4))
         if (!url.exists(path)) {
             blank_map()
         } else {
@@ -294,6 +295,7 @@ server <- function(input, output, session) {
 
     # MapSPecies
     output$map_mapSpecies <- renderPlot({
+        par(mar = rep(0, 4))
         if (!url.exists(path_map_mapSpecies())) {
             blank_map()
         } else {
@@ -323,6 +325,7 @@ server <- function(input, output, session) {
 
     # Maxent
     output$map_Maxent <- renderPlot({
+        par(mar = rep(0, 4))
         if (!url.exists(path_map_Maxent())) {
             blank_map()
         } else {
@@ -367,6 +370,7 @@ server <- function(input, output, session) {
 
     # BRT
     output$map_BRT <- renderPlot({
+        par(mar = rep(0, 4))
         if (!url.exists(path_map_brt())) {
             blank_map()
         } else {
@@ -396,6 +400,7 @@ server <- function(input, output, session) {
 
     # Random Forest
     output$map_randomForest <- renderPlot({
+        par(mar = rep(0, 4))
         if (!url.exists(path_map_randomForest())) {
             blank_map()
         } else {
@@ -422,151 +427,7 @@ server <- function(input, output, session) {
             }
         }
     })
-
-    # -------------------------------- #
-    # Richesse specifique - SDM
-    # -------------------------------- #
-
-    #### Map selection
-    # observeEvent(input$predictors, {
-    #     if (input$rs_predictors == "noPredictors") {
-    #         updateRadioGroupButtons(session, "rs_spatial", choices = "Spatial")
-    #     } else {
-    #         updateRadioGroupButtons(session, "rs_spatial", choices = c("Spatial", "noSpatial"))
-    #     }
-    # })
-    # eBird
-    # path_RS_ebird <- reactive({
-    #     paste0(input$species_select, "_range.tif")
-    # })
-
-    # Vincent - INLA
-    # output$rs_INLA <- renderPlot({
-    #     map <- rast("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_INLA_RS_2017.tif")
-
-    #     plot(map,
-    #         axes = F,
-    #         mar = NA,
-    #         # range = c(0, 1),
-    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
-    #     )
-    #     plot(st_geometry(qc),
-    #         add = T,
-    #         border = "grey"
-    #     )
-    #     plot(st_geometry(lakes_qc),
-    #         add = T,
-    #         col = "white",
-    #         border = "grey"
-    #     )
-    # })
-
-    # Maxent
-    # path_RS_Maxent <- reactive({
-    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_Maxent_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    # })
-    # output$rs_maxent <- renderPlot({
-    #     map <- rast(path_RS_Maxent())
-
-    #     plot(map,
-    #         axes = F,
-    #         mar = NA,
-    #         # range = c(0, 1),
-    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
-    #     )
-    #     plot(st_geometry(qc),
-    #         add = T,
-    #         border = "grey"
-    #     )
-    #     plot(st_geometry(lakes_qc),
-    #         add = T,
-    #         col = "white",
-    #         border = "grey"
-    #     )
-    # })
-
-    # MapSpecies
-    # path_RS_mapSpecies <- reactive({
-    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_ewlgcpSDM_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    # })
-    # output$rs_mapSPecies <- renderPlot({
-    #     map <- rast(path_RS_mapSpecies())
-
-    #     plot(map,
-    #         axes = F,
-    #         mar = NA,
-    #         # range = c(0, 1),
-    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
-    #     )
-    #     plot(st_geometry(qc),
-    #         add = T,
-    #         border = "grey"
-    #     )
-    #     plot(st_geometry(lakes_qc),
-    #         add = T,
-    #         col = "white",
-    #         border = "grey"
-    #     )
-    # })
-    # BRT
-    # path_RS_brt <- reactive({
-    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_brt_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    # })
-    # output$rs_brt <- renderPlot({
-    #     map <- rast(path_RS_brt())
-
-    #     plot(map,
-    #         axes = F,
-    #         mar = NA,
-    #         # range = c(0, 1),
-    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
-    #     )
-    #     plot(st_geometry(qc),
-    #         add = T,
-    #         border = "grey"
-    #     )
-    #     plot(st_geometry(lakes_qc),
-    #         add = T,
-    #         col = "white",
-    #         border = "grey"
-    #     )
-    # })
-
-    # Random Forest
-    # path_RS_randomForest <- reactive({
-    #     paste0("/vsicurl/https://object-arbutus.cloud.computecanada.ca/bq-io/acer/TdeB_benchmark_SDM/TdB_bench_maps/species_richness/sdm/RICH_SPE_randomForest_", input$rs_predictors, "_", input$rs_bias, "_", input$rs_spatial, "_2017.tif")
-    # })
-    # output$rs_rf <- renderPlot({
-    #     map <- rast(path_RS_randomForest())
-
-    #     plot(map,
-    #         axes = F,
-    #         mar = NA,
-    #         # range = c(0, 1),
-    #         main = paste0("cumul = ", sum(values(map), na.rm = T))
-    #     )
-    #     plot(st_geometry(qc),
-    #         add = T,
-    #         border = "grey"
-    #     )
-    #     plot(st_geometry(lakes_qc),
-    #         add = T,
-    #         col = "white",
-    #         border = "grey"
-    #     )
-    # })
 }
-
-
-
-
-
-
-
-
-
-
-
 
 # ================================================================================
 # UI
@@ -653,71 +514,6 @@ ui <- navbarPage(
             )
         )
     )
-    # ),
-    # tabPanel(
-    #     "Richesse spécifique - SDM",
-    #     sidebarLayout(
-    #         sidebarPanel(
-    #             width = 2,
-    #             radioGroupButtons("rs_predictors",
-    #                 label = "Prédicteurs environnementaux",
-    #                 choices = c("Predictors", "noPredictors")
-    #             ),
-    #             radioGroupButtons("rs_bias",
-    #                 label = "Biais d'échantillonnage",
-    #                 choices = c("Bias", "noBias")
-    #             ),
-    #             radioGroupButtons("rs_spatial",
-    #                 label = "Auto-corrélation spatiale",
-    #                 choices = c("Spatial", "noSpatial")
-    #             )
-    #         ),
-    #         mainPanel(
-    #             # First row
-    #             fluidRow(
-    #                 box(
-    #                     title = "e-bird",
-    #                     width = 4,
-    #                     status = "primary",
-    #                     plotOutput("")
-    #                 ),
-    #                 box(
-    #                     title = "mapSpecies",
-    #                     width = 4,
-    #                     status = "warning",
-    #                     plotOutput("rs_mapSPecies")
-    #                 ),
-    #                 box(
-    #                     title = "Maxent",
-    #                     width = 4,
-    #                     status = "warning",
-    #                     plotOutput("rs_maxent")
-    #                 )
-    #             ),
-    #             # Third row
-    #             fluidRow(
-    #                 box(
-    #                     title = "INLA",
-    #                     width = 4,
-    #                     status = "primary",
-    #                     plotOutput("rs_INLA")
-    #                 ),
-    #                 box(
-    #                     title = "boosted regression tree",
-    #                     width = 4,
-    #                     status = "warning",
-    #                     plotOutput("rs_brt")
-    #                 ),
-    #                 box(
-    #                     title = "random forest",
-    #                     width = 4,
-    #                     status = "warning",
-    #                     plotOutput("rs_rf")
-    #                 )
-    #             )
-    #         )
-    #     )
-    # )
 )
 
 # ================================================================================
